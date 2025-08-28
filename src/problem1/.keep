@@ -1,0 +1,20 @@
+var sum_to_n_a = function(n) {
+  n = Math.floor(n);
+  if (n <= 0) return 0;
+  return (n * (n + 1)) / 2;
+};
+
+var sum_to_n_b = function(n) {
+  n = Math.floor(n);
+  if (n <= 0) return 0;
+  let s = 0;
+  for (let i = 1; i <= n; i++) s += i;
+  return s;
+};
+
+var sum_to_n_c = function(n) {
+  n = Math.floor(n);
+  if (n <= 0) return 0;
+  return Array.from({ length: n }, (_, i) => i + 1).reduce((a, b) => a + b, 0);
+};
+

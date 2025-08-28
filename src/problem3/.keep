@@ -1,0 +1,78 @@
+import React, { useMemo } from "react";
+
+interface WalletBalance {
+  currency: string;
+  amount: number;
+  blockchain: string;
+}
+
+interface FormattedWalletBalance extends WalletBalance {
+  formatted: string; 
+}
+
+type PricesMap = Record<string, number>;
+
+
+const PRIORITY_MAP: Record<string, number> = {
+  Osmosis: 100,
+  Ethereum: 50,
+  Arbitrum: 30,
+  Zilliqa: 20,
+  Neo: 20,
+};
+
+const getPriority = (blockchain: string): number =>
+  PRIORITY_MAP[blockchain] ?? -99;
+
+declare function useWalletBalances(): WalletBalance[];
+declare function usePrices(): PricesMap;
+
+const WalletPage: React.FC<Props> = (props) => {
+  const balances = useWalletBalances();
+  const prices = usePrices();
+
+  const sortedBalances = useMemo(() => {
+    return balances
+      .filter((b) => getPriority(b.blockchain) > -99 && b.amount > 0)
+      .sort((a, b) => {
+        const pa = getPriority(a.blockchain);
+        const pb = getPriority(b.blockchain);
+        if (pa !== pb) return pb - pa;         
+        if (a.amount !== b.amount) return b.amount - a.amount; 
+        return a.currency.localeCompare(b.currency);           
+      });
+  }, [balances]);
+
+  const formattedBalances: FormattedWalletBalance[] = useMemo(
+    () =>
+      sortedBalances.map((b) => ({
+        ...b,
+        formatted: b.amount.toFixed(2), 
+      })),
+    [sortedBalances]
+  );
+
+  const rows = useMemo(
+    () =>
+      formattedBalances.map((b) => {
+        const price = prices?.[b.currency] ?? 0;
+        const usdValue = price * b.amount;
+
+        return (
+          <WalletRow
+            key={`${b.blockchain}-${b.currency}`} 
+            amount={b.amount}
+            usdValue={usdValue}
+            formattedAmount={b.formatted}
+          />
+        );
+      }),
+    [formattedBalances, prices]
+  );
+
+  return (
+    <div>{rows}</div>
+  );
+};
+
+export default WalletPage;
